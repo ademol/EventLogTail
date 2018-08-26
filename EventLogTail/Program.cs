@@ -7,7 +7,6 @@ namespace EventLogTail
 {
     class Program
     {
-        // logs to tail  (only supports administrative eventlogs) !
         //static private String[] logNames = { "Application", "System", "Security", "Windows Powershell" };
         static private String hostName = ".";
         static private ConsoleColor defaultCC = ConsoleColor.White;
@@ -23,7 +22,7 @@ namespace EventLogTail
                 WriteLineConsole(String.Format("search string [{0}]",searchString), ConsoleColor.Cyan);
             }
 
-            foreach (string logName in EventLog.GetEventLogs().Select(x => x.LogDisplayName))
+            foreach (string logName in EventLog.GetEventLogs().Select(x => x.Log))
             {
 
                 // attach to eventlog
@@ -31,7 +30,7 @@ namespace EventLogTail
                 try
                 {
 
-                    WriteLineConsole(String.Format("Registering eventlog [{0}]", elog.LogDisplayName), ConsoleColor.DarkGreen);
+                    WriteLineConsole(String.Format("Registering eventlog [{0}]", logName), ConsoleColor.DarkGreen);
                     elog.EntryWritten += new EntryWrittenEventHandler(MyOnEntryWritten);
                     elog.EnableRaisingEvents = true;
                 }
