@@ -1,49 +1,49 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using CommandLine;
 
 namespace EventLogTail
 {
     class Program
     {
-        static private String hostName = ".";
+        static private String _hostName = ".";
         private static readonly ConsoleColor defaultCC = ConsoleColor.White;
-        static private String searchString = null;
-        static private bool SearchExistingLogEntries = false;
-        static private bool ShowDetail = false;
-        static private Nullable<int> instanceId = null;
+        static private String _searchString;
+        static private bool _searchExistingLogEntries;
+        static private bool _showDetail;
+        static private int? _instanceId;
 
         static void Main(string[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
-                            .WithParsed<Options>(o =>
+                            .WithParsed(o =>
                             {
                                 if (o.SearchString?.Length > 0)
                                 {
-                                    searchString = o.SearchString;
-                                    WriteLineConsole(String.Format("#search string [{0}]", searchString), ConsoleColor.Cyan);
+                                    _searchString = o.SearchString;
+                                    WriteLineConsole(String.Format("#search string [{0}]", _searchString), ConsoleColor.Cyan);
                                 }
 
-                                SearchExistingLogEntries = o.ExistingLogEntries;
-                                if (SearchExistingLogEntries) { WriteLineConsole(String.Format("#Displaying existing entries"), ConsoleColor.Cyan); }
+                                _searchExistingLogEntries = o.ExistingLogEntries;
+                                if (_searchExistingLogEntries) { WriteLineConsole("#Displaying existing entries", ConsoleColor.Cyan); }
 
-                                ShowDetail = o.Detail;
-                                if (ShowDetail) { WriteLineConsole(String.Format("#Detail log entry"), ConsoleColor.Cyan); }
+                                _showDetail = o.Detail;
+                                if (_showDetail) { WriteLineConsole("#Detail log entry", ConsoleColor.Cyan); }
 
-                                if ( o.instanceId.HasValue )
+                                if ( o.InstanceId.HasValue )
                                 {
-                                    instanceId = o.instanceId;
+                                    _instanceId = o.InstanceId;
                                 }
                                 if ( o.HostName?.Length > 0)
                                 {
-                                    hostName = o.HostName;
+                                    _hostName = o.HostName;
                                 }
 
                             });
 
-        if ( SearchExistingLogEntries )
+        if ( _searchExistingLogEntries )
             {
                 DoExistingLogEntries();
             } else
@@ -57,11 +57,11 @@ namespace EventLogTail
             foreach (string logName in EventLog.GetEventLogs().Select(x => x.Log))
             {
                 // attach to eventlog
-                EventLog elog = new EventLog(logName, hostName);
+                EventLog elog = new EventLog(logName, _hostName);
                 try
                 {
                     WriteLineConsole(String.Format("Registering eventlog [{0}]", logName), ConsoleColor.DarkGreen);
-                    elog.EntryWritten += new EntryWrittenEventHandler(MyOnEntryWritten);
+                    elog.EntryWritten += MyOnEntryWritten;
                     elog.EnableRaisingEvents = true;
                 }
                 catch (Exception e)
@@ -80,7 +80,7 @@ namespace EventLogTail
             foreach (string logName in EventLog.GetEventLogs().Select(x => x.Log))
             {
                 WriteLineConsole($"#parsing {logName}", ConsoleColor.Blue);
-                EventLog elog = new EventLog(logName, hostName);
+                EventLog elog = new EventLog(logName, _hostName);
 
                 var entries = elog.Entries;
                 foreach (EventLogEntry entry in entries)
@@ -113,12 +113,12 @@ namespace EventLogTail
                 , e.TimeStamp, e.MachineName, e.LogName, e.LogSource, e.EntryType, e.InstanceId);
             WriteConsole(header, ConsoleColor.DarkGreen);
 
-            if (ShowDetail)
+            if (_showDetail)
             {
                  WriteLineConsole(e.Message);
             } else
             {
-                string firstLine = Regex.Match(e.Message, @"^([^\n]+)")?.Value;
+                string firstLine = Regex.Match(e.Message, @"^([^\n]+)").Value;
                 WriteLineConsole(firstLine);
             }
  
@@ -126,20 +126,20 @@ namespace EventLogTail
 
         private static bool MatchEntry(ILogEntryNormalized e)
         {
-            Boolean lineMatched = false;
-            Boolean lineMatchedSearchCriteria = false;
-            Boolean lineMatchedEventCriteria = false;
+            Boolean lineMatched;
+            Boolean lineMatchedSearchCriteria;
+            Boolean lineMatchedEventCriteria;
 
-            if ( searchString?.Length > 0 ) {
-                lineMatchedSearchCriteria = MatchEntry(e, searchString);
+            if ( _searchString?.Length > 0 ) {
+                lineMatchedSearchCriteria = MatchEntry(e, _searchString);
             } else
             {
                 // no limiting Search criteria
                 lineMatchedSearchCriteria = true;  
             }
 
-            if (instanceId.HasValue) {
-                lineMatchedEventCriteria = MatchEntry(e, instanceId.Value);
+            if (_instanceId.HasValue) {
+                lineMatchedEventCriteria = MatchEntry(e, _instanceId.Value);
             } else
             {
                 // no limiting eventID criteria
@@ -164,33 +164,29 @@ namespace EventLogTail
             return lineMatched;
         }
 
-        private static bool MatchEntry(ILogEntryNormalized e, int matchInstanceID)
+        private static bool MatchEntry(ILogEntryNormalized e, int matchInstanceId)
         {
-            Boolean lineMatched = false;
-            if (e.InstanceId == matchInstanceID) { lineMatched = true; }
+            bool lineMatched = e.InstanceId == matchInstanceId;
             return lineMatched;
         }
 
-        public static void WriteLineConsole(string line, ConsoleColor cc)
+        private static void WriteLineConsole(string line, ConsoleColor cc)
         {
             Console.ForegroundColor = cc;
             Console.WriteLine(line);
             Console.ResetColor();
         }
-        public static void WriteLineConsole(string line)
+
+        private static void WriteLineConsole(string line)
         {
             WriteLineConsole(line, defaultCC);
         }
 
-        public static void WriteConsole(string line, ConsoleColor cc)
+        private static void WriteConsole(string line, ConsoleColor cc)
         {
             Console.ForegroundColor = cc;
             Console.Write(line);
             Console.ResetColor();
-        }
-        public static void WriteConsole(string line)
-        {
-            WriteConsole(line, defaultCC);
         }
     }
 }

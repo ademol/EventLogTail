@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
+using System.Globalization;
 
 namespace EventLogTail
 {
@@ -19,13 +15,13 @@ namespace EventLogTail
 
         public TailLogEntry(EntryWrittenEventArgs e)
         {
-            this.Message = e.Entry.Message;
-            this.TimeStamp = e.Entry.TimeGenerated.ToString();
-            this.MachineName = e.Entry.MachineName.ToString();
-            this.LogSource = e.Entry.Source.ToString();
-            this.LogName = EventLog.LogNameFromSourceName(this.LogSource, this.MachineName);
-            this.EntryType = e.Entry.EntryType.ToString();
-            this.InstanceId = e.Entry.InstanceId;
+            Message = e.Entry.Message;
+            TimeStamp = e.Entry.TimeGenerated.ToString(CultureInfo.InvariantCulture);
+            MachineName = e.Entry.MachineName;
+            LogSource = e.Entry.Source;
+            LogName = EventLog.LogNameFromSourceName(LogSource, MachineName);
+            EntryType = e.Entry.EntryType.ToString();
+            InstanceId = e.Entry.InstanceId;
         }
     }
 }

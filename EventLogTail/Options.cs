@@ -1,11 +1,4 @@
 ﻿using CommandLine;
-using CommandLine.Text;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 
 namespace EventLogTail
 {
@@ -18,7 +11,7 @@ namespace EventLogTail
         public string SearchString { get; set; }
 
         [Option('i', "instanceId", Required = false, HelpText = "Limit result to this instanceId")]
-        public Nullable<int> instanceId { get; set; }
+        public int? InstanceId { get; set; }
 
         [Option('e', "existing", Default = false, HelpText = "Dont tail, but display existing entries")]
         public bool ExistingLogEntries { get; set; }
